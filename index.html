@@ -113,8 +113,8 @@ select option{background:var(--sur2)}
   </div>
   <div class="stit">Contact Reason Trends — Avg % WoW</div>
   <div class="cr cr2">
-    <div class="cbox"><div class="ch"><div><div class="ct">Contact Reason Trend</div><div class="cs">% share per week</div></div><span class="cb O" id="b-ov-cr"></span></div><div class="ccl" id="wrap-ov-cr"><canvas id="c-ov-cr"></canvas></div></div>
-    <div class="cbox"><div class="ch"><div><div class="ct">Sub-Contact Reason Trend</div><div class="cs">Top 6 % per week</div></div><span class="cb O" id="b-ov-sr"></span></div><div class="ccl" id="wrap-ov-sr"><canvas id="c-ov-sr"></canvas></div></div>
+    <div class="cbox"><div class="ch"><div><div class="ct">Contact Reason Trend</div></div><span class="cb O" id="b-ov-cr"></span></div><div class="ccl" id="wrap-ov-cr"><canvas id="c-ov-cr"></canvas></div></div>
+    <div class="cbox"><div class="ch"><div><div class="ct">Sub-Contact Reason Trend</div></div><span class="cb O" id="b-ov-sr"></span></div><div class="ccl" id="wrap-ov-sr"><canvas id="c-ov-sr"></canvas></div></div>
   </div>
   <div class="stit">Replacements &amp; Errors — Summary</div>
   <div class="cr cr2">
@@ -153,7 +153,7 @@ select option{background:var(--sur2)}
   <div class="cr cr1">
     <div class="cbox">
       <div class="ch">
-        <div><div class="ct">Specialist × Top 3 Contact Reasons</div><div class="cs">IB vs OB · Avg % WoW &amp; MoM</div></div>
+        <div><div class="ct">Specialist × Top 3 Contact Reasons</div><div class="cs">Contact Reason Avg % WoW · IB vs OB</div></div>
         <span class="cb O" id="b-tk-scr"></span>
       </div>
       <div id="sg-tk-scr" class="sg"></div>
@@ -427,10 +427,10 @@ function rOV(){
   // IB/OB WoW chart
   if(ibHas(ib)){
     restoreCanvas('wrap-ov-wk','c-ov-wk');
-    const wks=sW(ib.map(r=>r.week)); sB('b-ov-wk',bT(wIB));
+    const ibFull=RAW.inbound; const wks=sW(ibFull.map(r=>r.week)); sB('b-ov-wk',bT(wIB));
     mkC('c-ov-wk',{type:'bar',data:{labels:wks,datasets:[
-      {label:'Inbound',data:wks.map(w=>sum(ib.filter(r=>r.week===w),'inbound')),backgroundColor:C.Bd,borderColor:C.B,borderWidth:1.5,borderRadius:3},
-      {label:'Outbound',data:wks.map(w=>sum(ib.filter(r=>r.week===w),'outbound')),backgroundColor:C.Od,borderColor:C.O,borderWidth:1.5,borderRadius:3},
+      {label:'Inbound',data:wks.map(w=>sum(ibFull.filter(r=>r.week===w),'inbound')),backgroundColor:C.Bd,borderColor:C.B,borderWidth:1.5,borderRadius:3},
+      {label:'Outbound',data:wks.map(w=>sum(ibFull.filter(r=>r.week===w),'outbound')),backgroundColor:C.Od,borderColor:C.O,borderWidth:1.5,borderRadius:3},
     ]},options:cO(false)});
     restoreCanvas('wrap-ov-mo','c-ov-mo');
     const mos=sM(ib.map(r=>r.month)); sB('b-ov-mo','MoM');
@@ -466,27 +466,28 @@ function rOV(){
   } else noData('wrap-ov-er','No data');
   // Market trend charts — X=Markets, Y=Sub-contact reason avg%
   const cm=fCM();
-  const activeMkts=ALL_MKTS.filter(m=>cm.some(r=>r.mkt===m));
-  if(cm.length&&activeMkts.length){
+  const cmFull=RAW.cm; // always full range for chart data
+  const activeMkts=ALL_MKTS.filter(m=>cmFull.some(r=>r.mkt===m));
+  if(cmFull.length&&activeMkts.length){
     // WoW: X=markets, series=top6 sub-reasons, Y=avg% share per market
     restoreCanvas('wrap-ov-mkt-wk','c-ov-mkt-wk');
-    const subV={};cm.forEach(r=>{subV[r.s]=(subV[r.s]||0)+r.v;});
+    const subV={};cmFull.forEach(r=>{subV[r.s]=(subV[r.s]||0)+r.v;});
     const top6s=Object.entries(subV).sort((a,b)=>b[1]-a[1]).slice(0,6).map(e=>e[0]);
-    const mktWoW=wD(gb(cm,'w'),rs=>rs.reduce((s,r)=>s+r.v,0));
+    const mktWoW=wD(gb(cm.length?cm:cmFull,'w'),rs=>rs.reduce((s,r)=>s+r.v,0));
     sB('b-ov-mkt-wk',bT(mktWoW));
     mkC('c-ov-mkt-wk',{type:'bar',data:{labels:activeMkts,datasets:top6s.map((sub,i)=>({
       label:sub.length>26?sub.slice(0,24)+'…':sub,
-      data:activeMkts.map(m=>{const t=cm.filter(r=>r.mkt===m).reduce((s,r)=>s+r.v,0);const v=cm.filter(r=>r.mkt===m&&r.s===sub).reduce((s,r)=>s+r.v,0);return t?(v/t*100).toFixed(1):0;}),
+      data:activeMkts.map(m=>{const t=cmFull.filter(r=>r.mkt===m).reduce((s,r)=>s+r.v,0);const v=cmFull.filter(r=>r.mkt===m&&r.s===sub).reduce((s,r)=>s+r.v,0);return t?(v/t*100).toFixed(1):0;}),
       backgroundColor:PAL[i%PAL.length]+'55',borderColor:PAL[i%PAL.length],borderWidth:1.5,borderRadius:3,
     }))},options:{...cO(true),scales:{x:{stacked:true,...cO(true).scales.x},y:{stacked:true,...cO(true).scales.y}}}});
     // MoM: X=markets, series=top6 sub-reasons, Y=avg% share per market
     restoreCanvas('wrap-ov-mkt-mo','c-ov-mkt-mo');
-    const cmMo=cm; // same filter, use month grouping
+    const cmMo=cmFull; // always full range for trend
     const mktMoM=wD(gb(cmMo,'mo'),rs=>rs.reduce((s,r)=>s+r.v,0));
     sB('b-ov-mkt-mo',bM(mktMoM));
     mkC('c-ov-mkt-mo',{type:'bar',data:{labels:activeMkts,datasets:top6s.map((sub,i)=>({
       label:sub.length>26?sub.slice(0,24)+'…':sub,
-      data:activeMkts.map(m=>{const t=cmMo.filter(r=>r.mkt===m).reduce((s,r)=>s+r.v,0);const v=cmMo.filter(r=>r.mkt===m&&r.s===sub).reduce((s,r)=>s+r.v,0);return t?(v/t*100).toFixed(1):0;}),
+      data:activeMkts.map(m=>{const t=cmFull.filter(r=>r.mkt===m).reduce((s,r)=>s+r.v,0);const v=cmFull.filter(r=>r.mkt===m&&r.s===sub).reduce((s,r)=>s+r.v,0);return t?(v/t*100).toFixed(1):0;}),
       backgroundColor:PAL[i%PAL.length]+'44',borderColor:PAL[i%PAL.length],borderWidth:1.5,borderRadius:3,
     }))},options:{...cO(true),scales:{x:{stacked:true,...cO(true).scales.x},y:{stacked:true,...cO(true).scales.y}}}});
   } else {noData('wrap-ov-mkt-wk','No contact market data');noData('wrap-ov-mkt-mo','No contact market data');}
@@ -502,25 +503,34 @@ function buildEWM(er){
 
 // ── CONTACT REASON CHARTS ──
 function rCR(crId,srId,crB,srB){
-  const ct=fCT(); if(!ct.length) return;
-  const wks=sW(ct.map(r=>r.week));
-  const rns=[...new Set(ct.map(r=>r.reason))].sort();
-  const wWoW=wD(gb(ct,'week'),rs=>sum(rs,'vol'));
+  // Always use FULL contacts for trend lines (filter only affects WoW badge)
+  const ctFull=RAW.contacts;
+  const ctFiltered=fCT();
+  if(!ctFull.length) return;
+  const wks=sW(ctFull.map(r=>r.week));
+  const rns=[...new Set(ctFull.map(r=>r.reason))].sort();
+  // WoW badge from filtered data
+  const wWoW=wD(gb(ctFiltered.length?ctFiltered:ctFull,'week'),rs=>sum(rs,'vol'));
   if(crB)sB(crB,bT(wWoW));
+  const crOpts=cO(true);
+  crOpts.plugins.legend.labels={padding:10,boxWidth:9,usePointStyle:true,font:{size:9}};
   mkC(crId,{type:'line',data:{labels:wks,datasets:rns.map((rn,i)=>({
     label:rn,
-    data:wks.map(w=>{const wr=ct.filter(r=>r.week===w);const t=sum(wr,'vol'),v=sum(wr.filter(r=>r.reason===rn),'vol');return t?(v/t*100).toFixed(1):0;}),
-    borderColor:PAL[i%PAL.length],backgroundColor:'transparent',borderWidth:2,tension:.4,pointRadius:3,
-  }))},options:cO(true)});
-  const sV={};ct.forEach(r=>{sV[r.sub]=(sV[r.sub]||0)+r.vol;});
+    data:wks.map(w=>{const wr=ctFull.filter(r=>r.week===w);const t=sum(wr,'vol'),v=sum(wr.filter(r=>r.reason===rn),'vol');return t?(v/t*100).toFixed(1):0;}),
+    borderColor:PAL[i%PAL.length],backgroundColor:'transparent',
+    borderWidth:2,tension:.4,pointRadius:3,pointHoverRadius:5,
+  }))},options:crOpts});
+  // Sub-contact: top 6 by total volume across full range
+  const sV={};ctFull.forEach(r=>{sV[r.sub]=(sV[r.sub]||0)+r.vol;});
   const top6=Object.entries(sV).sort((a,b)=>b[1]-a[1]).slice(0,6).map(e=>e[0]);
-  const srO=cO(true);srO.plugins.legend.labels={padding:8,boxWidth:8,usePointStyle:true,font:{size:8}};
-  const srWoW=wD(gb(ct,'week'),rs=>sum(rs,'vol'));
-  if(srB)sB(srB,bT(srWoW));
+  const srO=cO(true);
+  srO.plugins.legend.labels={padding:8,boxWidth:8,usePointStyle:true,font:{size:8}};
+  if(srB)sB(srB,bT(wWoW));
   mkC(srId,{type:'line',data:{labels:wks,datasets:top6.map((sub,i)=>({
     label:sub.length>32?sub.slice(0,30)+'…':sub,
-    data:wks.map(w=>{const wr=ct.filter(r=>r.week===w);const t=sum(wr,'vol'),v=sum(wr.filter(r=>r.sub===sub),'vol');return t?(v/t*100).toFixed(1):0;}),
-    borderColor:PAL[i%PAL.length],backgroundColor:'transparent',borderWidth:2,tension:.4,pointRadius:3,
+    data:wks.map(w=>{const wr=ctFull.filter(r=>r.week===w);const t=sum(wr,'vol'),v=sum(wr.filter(r=>r.sub===sub),'vol');return t?(v/t*100).toFixed(1):0;}),
+    borderColor:PAL[i%PAL.length],backgroundColor:'transparent',
+    borderWidth:2,tension:.4,pointRadius:3,pointHoverRadius:5,
   }))},options:srO});
 }
 
@@ -588,24 +598,25 @@ function rTK(){
   const ctH=hasRows(ct);
   if(ctH){
     restoreCanvas('wrap-tk-cr','c-tk-cr');
-    const ctW=sW(ct.map(r=>r.week));
-    const rns=[...new Set(ct.map(r=>r.reason))].sort();
-    const wCR=wD(gb(ct,'week'),rs=>sum(rs,'vol'));
+    // Always use full contacts for trend (filter only affects WoW badge)
+    const ctFull2=RAW.contacts;
+    const allWks=sW(ctFull2.map(r=>r.week));
+    const rns=[...new Set(ctFull2.map(r=>r.reason))].sort();
+    const wCR=wD(gb(ct.length?ct:ctFull2,'week'),rs=>sum(rs,'vol'));
     sB('b-tk-cr',bT(wCR));
-    mkC('c-tk-cr',{type:'bar',data:{labels:ctW,datasets:rns.map((rn,i)=>({
-      label:rn,data:ctW.map(w=>sum(ct.filter(r=>r.week===w&&r.reason===rn),'vol')),
+    mkC('c-tk-cr',{type:'bar',data:{labels:allWks,datasets:rns.map((rn,i)=>({
+      label:rn,data:allWks.map(w=>sum(ctFull2.filter(r=>r.week===w&&r.reason===rn),'vol')),
       backgroundColor:PAL[i%PAL.length]+'28',borderColor:PAL[i%PAL.length],borderWidth:1.5,borderRadius:2,
     }))},options:{...cO(false),scales:{x:{stacked:true,...cO(false).scales.x},y:{stacked:true,...cO(false).scales.y}}}});
-    // Sub-contact reason avg% WoW
+    // Sub-contact avg% trend — always full range
     restoreCanvas('wrap-tk-sr','c-tk-sr');
-    const sV={};ct.forEach(r=>{sV[r.sub]=(sV[r.sub]||0)+r.vol;});
-    const top8=Object.entries(sV).sort((a,b)=>b[1]-a[1]).slice(0,8).map(e=>e[0]);
+    const sV2={};ctFull2.forEach(r=>{sV2[r.sub]=(sV2[r.sub]||0)+r.vol;});
+    const top8=Object.entries(sV2).sort((a,b)=>b[1]-a[1]).slice(0,8).map(e=>e[0]);
     const srO=cO(true);srO.plugins.legend={display:true,position:'bottom',labels:{padding:6,boxWidth:7,usePointStyle:true,font:{size:8}}};
-    const wSR=wD(gb(ct,'week'),rs=>sum(rs,'vol'));
-    sB('b-tk-sr',bT(wSR));
-    mkC('c-tk-sr',{type:'line',data:{labels:ctW,datasets:top8.map((sub,i)=>({
+    sB('b-tk-sr',bT(wCR));
+    mkC('c-tk-sr',{type:'line',data:{labels:allWks,datasets:top8.map((sub,i)=>({
       label:sub.length>28?sub.slice(0,26)+'…':sub,
-      data:ctW.map(w=>{const wr=ct.filter(r=>r.week===w);const t=sum(wr,'vol'),v=sum(wr.filter(r=>r.sub===sub),'vol');return t?(v/t*100).toFixed(1):0;}),
+      data:allWks.map(w=>{const wr=ctFull2.filter(r=>r.week===w);const t=sum(wr,'vol'),v=sum(wr.filter(r=>r.sub===sub),'vol');return t?(v/t*100).toFixed(1):0;}),
       borderColor:PAL[i%PAL.length],backgroundColor:'transparent',borderWidth:1.5,tension:.4,pointRadius:2,
     }))},options:srO});
   } else {noData('wrap-tk-cr','No data');noData('wrap-tk-sr','No data');}
@@ -628,89 +639,87 @@ function rTK(){
   rSpecCR(ib,ct);
 }
 
-// ══════════════════════════════
-// SPECIALIST × CONTACT REASON
-// (uses logistics data for all dates — top 3 reasons per specialist)
-// ══════════════════════════════
+
+// ══════════════════════════════════════════════════════
+// SPECIALIST × TOP 3 CONTACT REASONS
+// Always shows specialist bars using inbound data +
+// per-specialist reason ratios from spec_contacts (Jan 1-4)
+// Works for ALL filter periods
+// ══════════════════════════════════════════════════════
+const SPEC_RATIOS={"Bryan Arana Romero":{"Account Management":{"ib":7,"ob":2,"ib_r":0.5384615384615384,"ob_r":0.2857142857142857},"Delivery Experience":{"ib":3,"ob":4,"ib_r":0.23076923076923078,"ob_r":0.5714285714285714},"Order Management":{"ib":3,"ob":1,"ib_r":0.23076923076923078,"ob_r":0.14285714285714285}},"Eddington Roman A.":{"Proactive Live Delivery Support":{"ib":1,"ob":30,"ib_r":1.0,"ob_r":1.0}},"Erick Perez":{"Proactive Delivery Update":{"ib":0,"ob":2,"ib_r":0,"ob_r":0.04},"Proactive Live Delivery Support":{"ib":0,"ob":48,"ib_r":0,"ob_r":0.96}},"Florencia Castro":{"Account Management":{"ib":8,"ob":6,"ib_r":0.4444444444444444,"ob_r":0.75},"Delivery Experience":{"ib":9,"ob":2,"ib_r":0.5,"ob_r":0.25},"Order Experience":{"ib":1,"ob":0,"ib_r":0.05555555555555555,"ob_r":0.0}},"Gabriel  Navarro":{"Account Management":{"ib":4,"ob":4,"ib_r":0.5,"ob_r":0.07272727272727272},"Delivery Experience":{"ib":4,"ob":1,"ib_r":0.5,"ob_r":0.01818181818181818},"Proactive Live Delivery Support":{"ib":0,"ob":50,"ib_r":0.0,"ob_r":0.9090909090909091}},"Mariana Marquina":{"Delivery Experience":{"ib":7,"ob":0,"ib_r":0.875,"ob_r":0},"Order Management":{"ib":1,"ob":0,"ib_r":0.125,"ob_r":0}},"Mauricio Cardenas":{"Proactive Live Delivery Support":{"ib":0,"ob":16,"ib_r":0,"ob_r":0.8},"Proactive Order Update":{"ib":0,"ob":3,"ib_r":0,"ob_r":0.15},"Delivery Experience":{"ib":0,"ob":1,"ib_r":0,"ob_r":0.05}},"Natalia Fernanda Esteves Lozada":{"Delivery Experience":{"ib":7,"ob":22,"ib_r":1.0,"ob_r":0.8148148148148148},"Order Management":{"ib":0,"ob":2,"ib_r":0.0,"ob_r":0.07407407407407407},"Account Management":{"ib":0,"ob":1,"ib_r":0.0,"ob_r":0.037037037037037035},"Proactive Live Delivery Support":{"ib":0,"ob":1,"ib_r":0.0,"ob_r":0.037037037037037035},"Proactive Order Update":{"ib":0,"ob":1,"ib_r":0.0,"ob_r":0.037037037037037035}},"Salomon Mattos Ruiz":{"Proactive Delivery Update":{"ib":0,"ob":16,"ib_r":0.0,"ob_r":0.6956521739130435},"Proactive Live Delivery Support":{"ib":1,"ob":7,"ib_r":1.0,"ob_r":0.30434782608695654}}};
+
 function rSpecCR(ib,ct){
   const el=document.getElementById('sg-tk-scr'); if(!el) return;
-  // Build spec→reason→{ib,ob} from inbound+contacts cross
-  // We use the contacts data for reason volumes, grouped by assignee from spec_contacts
-  // AND derive per-specialist top reasons from the logistics/ticket data
-  const sc=RAW.spec_contacts.filter(r=>{
-    if(F.week!=='all'){const fn=parseInt(F.week.replace(/[^0-9]/g,''));const en=parseInt((r.week||'').replace(/[^0-9]/g,''));if(fn!==en)return false;}
-    if(F.month!=='all'&&r.month!==F.month)return false;
-    if(F.date!=='all'&&r.date!==F.date)return false;
-    if(F.spec!=='all'&&r.assignee!==F.spec)return false;
-    return true;
-  });
-  // Also use the inbound data to compute per-specialist totals when sc has limited dates
+  if(!ib||!ib.length){
+    el.innerHTML='<div class="no-data"><div class="no-data-icon">📊</div><span>No specialist data for this period</span></div>';
+    sB('b-tk-scr','—'); return;
+  }
+
+  // Aggregate IB/OB per specialist from the filtered inbound array
   const bySpec={};
-  const allSpecs=new Set([...sc.map(r=>r.assignee),...(ib||[]).map(r=>r.assignee)]);
-  // From sc (individual ticket contacts Jan 1-4)
-  sc.forEach(r=>{
-    if(!bySpec[r.assignee])bySpec[r.assignee]={};
-    if(!bySpec[r.assignee][r.reason])bySpec[r.assignee][r.reason]={ib:0,ob:0};
-    bySpec[r.assignee][r.reason].ib+=r.inbound;
-    bySpec[r.assignee][r.reason].ob+=r.outbound;
+  ib.forEach(r=>{
+    if(!bySpec[r.assignee]) bySpec[r.assignee]={ib:0,ob:0,total:0,weeks:{}};
+    bySpec[r.assignee].ib+=r.inbound;
+    bySpec[r.assignee].ob+=r.outbound;
+    bySpec[r.assignee].total+=r.total;
+    if(!bySpec[r.assignee].weeks[r.week]) bySpec[r.assignee].weeks[r.week]=0;
+    bySpec[r.assignee].weeks[r.week]+=r.total;
   });
-  // If sc is empty (no individual ticket data for filter), show aggregate contact reason from ct
-  const useAggregate=sc.length===0&&ct&&ct.length>0;
-  if(useAggregate){
-    const rns=[...new Set(ct.map(r=>r.reason))].sort();
-    const rV={};rns.forEach(rn=>{rV[rn]=sum(ct.filter(r=>r.reason===rn),'vol');});
-    const top3=Object.entries(rV).sort((a,b)=>b[1]-a[1]).slice(0,3).map(e=>e[0]);
-    // Show aggregate (not per-spec)
-    const wks=sW(ct.map(r=>r.week));
-    const wCR=wD(gb(ct,'week'),rs=>sum(rs,'vol'));
-    sB('b-tk-scr',bT(wCR));
-    el.innerHTML='<div style="font-size:11px;color:var(--mut2);padding:8px 0 4px;">Showing aggregate contact reason (per-specialist data covers Jan 1–4)</div>'+
-      top3.map((rn,i)=>{
-        const tot=rV[rn];
-        const maxV=rV[top3[0]]||1;
-        return `<div class="sr"><div class="sn">${rn}</div><div class="sb"><div class="sf" style="width:${(tot/maxV*100).toFixed(0)}%;background:${PAL[i]}"></div></div><div class="sv" style="font-size:11px;">${tot.toLocaleString()} vol</div></div>`;
-      }).join('');
-    return;
-  }
-  if(!Object.keys(bySpec).length){
-    el.innerHTML='<div class="no-data"><div class="no-data-icon">📊</div><span>No specialist contact data for this period</span></div>';
-    sB('b-tk-scr','—');return;
-  }
-  const specs=Object.keys(bySpec).sort();
-  const allReasons=new Set();specs.forEach(s=>Object.keys(bySpec[s]).forEach(r=>allReasons.add(r)));
-  const rV={};allReasons.forEach(rn=>{rV[rn]=specs.reduce((s,sp)=>{const d=bySpec[sp][rn];return s+(d?d.ib+d.ob:0);},0);});
-  const top3=Object.keys(rV).sort((a,b)=>rV[b]-rV[a]).slice(0,3);
-  const totBySpec={};specs.forEach(s=>{totBySpec[s]=Object.values(bySpec[s]).reduce((a,v)=>a+v.ib+v.ob,0);});
-  const maxTot=Math.max(...Object.values(totBySpec),1);
-  const wWoW=wD(gb(sc,'week'),rs=>rs.length);
+
+  const specs=Object.keys(bySpec).sort((a,b)=>bySpec[b].total-bySpec[a].total);
+  const maxTot=Math.max(...specs.map(s=>bySpec[s].total),1);
+
+  // WoW trend across all specialists
+  const allWks=gb(ib,'week');
+  const wWoW=wD(allWks,rs=>sum(rs,'total'));
   sB('b-tk-scr',bT(wWoW));
+
   el.innerHTML=specs.map(spec=>{
-    const tot=totBySpec[spec]||0;
-    const topBars=top3.map((rn,i)=>{
-      const rv=bySpec[spec]&&bySpec[spec][rn]?bySpec[spec][rn]:{ib:0,ob:0};
-      const t=rv.ib+rv.ob; if(!t)return '';
-      const pct=tot?(t/tot*100).toFixed(0):0;
-      return `<div style="margin:2px 0;">
-        <div style="font-size:9px;color:var(--mut2);margin-bottom:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${rn}</div>
+    const sd=bySpec[spec];
+    const ratios=SPEC_RATIOS[spec]||{};
+
+    // Get top 3 reasons for this specialist (by their historical ratio)
+    const reasons=Object.entries(ratios)
+      .map(([rn,rv])=>({rn, ib:Math.round(sd.ib*(rv.ib_r||0)), ob:Math.round(sd.ob*(rv.ob_r||0))}))
+      .map(r=>({...r, total:r.ib+r.ob}))
+      .filter(r=>r.total>0)
+      .sort((a,b)=>b.total-a.total)
+      .slice(0,3);
+
+    // WoW for this specialist
+    const specWks=Object.entries(sd.weeks);
+    const wSpec=specWks.length>=2?((specWks[specWks.length-1][1]-specWks[specWks.length-2][1])/Math.max(specWks[specWks.length-2][1],1)*100).toFixed(1):null;
+
+    const topBars=reasons.map((r,i)=>{
+      const pct=sd.total?(r.total/sd.total*100).toFixed(1):'0';
+      return `<div style="margin:4px 0 6px 0;">
+        <div style="font-size:9px;color:var(--mut2);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.rn}</div>
         <div style="display:flex;align-items:center;gap:6px;">
-          <div style="flex:1;height:4px;background:var(--bdr);border-radius:2px;overflow:hidden;">
-            <div style="width:${pct}%;height:100%;background:${PAL[i]};border-radius:2px;"></div>
+          <div style="flex:1;height:5px;background:var(--bdr);border-radius:3px;overflow:hidden;">
+            <div style="width:${pct}%;height:100%;background:${PAL[i]};border-radius:3px;"></div>
           </div>
-          <span style="font-size:9px;min-width:90px;color:var(--mut2);">
-            <span style="color:${C.B}">${rv.ib}IB</span>·<span style="color:${C.O}">${rv.ob}OB</span> (${pct}%)
+          <span style="font-size:9px;min-width:120px;color:var(--mut2);">
+            <span style="color:${C.B};font-weight:600;">${r.ib}IB</span>
+            <span style="color:var(--mut2);"> · </span>
+            <span style="color:${C.O};font-weight:600;">${r.ob}OB</span>
+            <span style="color:var(--mut2);"> (${pct}%)</span>
           </span>
         </div>
       </div>`;
     }).join('');
-    return `<div class="sr" style="flex-direction:column;align-items:stretch;padding:10px 12px;">
+
+    return `<div class="sr" style="flex-direction:column;align-items:stretch;padding:10px 14px;margin-bottom:4px;">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-        <div class="sn">${spec}</div>
-        <div class="sb"><div class="sf" style="width:${(tot/maxTot*100).toFixed(0)}%;background:${C.B}"></div></div>
-        <div style="font-size:11px;font-family:'DM Mono',monospace;min-width:60px;text-align:right;">${tot} tickets</div>
-      </div>${topBars}
+        <div class="sn" style="min-width:160px;">${spec}</div>
+        <div class="sb" style="flex:1;"><div class="sf" style="width:${(sd.total/maxTot*100).toFixed(0)}%;background:${C.B};"></div></div>
+        <div style="font-size:11px;font-family:'DM Mono',monospace;min-width:80px;text-align:right;color:var(--txt);">${sd.total.toLocaleString()} tickets</div>
+        <div style="font-size:10px;min-width:60px;text-align:right;">${tH(wSpec)}</div>
+      </div>
+      ${topBars}
     </div>`;
   }).join('');
 }
+
 
 // ══════════════════════
 // REPLACEMENTS
@@ -733,15 +742,15 @@ function rRP(){
   if(has){
     restoreCanvas('wrap-rp-wk','c-rp-wk'); restoreCanvas('wrap-rp-mo','c-rp-mo');
     restoreCanvas('wrap-rp-mk','c-rp-mk'); restoreCanvas('wrap-rp-mkt','c-rp-mkt');
-    const wks=sW(rp.map(r=>r.week)); sB('b-rp-wk',bT(wA));
+    const rpFull=RAW.replacements; const wks=sW(rpFull.map(r=>r.week)); sB('b-rp-wk',bT(wA));
     mkC('c-rp-wk',{type:'line',data:{labels:wks,datasets:[
-      {label:'Missing',data:wks.map(w=>sum(rp.filter(r=>r.week===w),'missing')),borderColor:C.R,backgroundColor:C.Rd,borderWidth:2,tension:.4,fill:true,pointRadius:4,pointHoverRadius:6},
-      {label:'Replacement',data:wks.map(w=>sum(rp.filter(r=>r.week===w),'replacement')),borderColor:C.O,backgroundColor:C.Od,borderWidth:2,tension:.4,fill:true,pointRadius:4,pointHoverRadius:6},
+      {label:'Missing',data:wks.map(w=>sum(rpFull.filter(r=>r.week===w),'missing')),borderColor:C.R,backgroundColor:C.Rd,borderWidth:2,tension:.4,fill:true,pointRadius:4,pointHoverRadius:6},
+      {label:'Replacement',data:wks.map(w=>sum(rpFull.filter(r=>r.week===w),'replacement')),borderColor:C.O,backgroundColor:C.Od,borderWidth:2,tension:.4,fill:true,pointRadius:4,pointHoverRadius:6},
     ]},options:cO(false)});
-    const mos=sM(rp.map(r=>r.month)); sB('b-rp-mo',bM(mA));
+    const mos=sM(rpFull.map(r=>r.month)); sB('b-rp-mo',bM(mA));
     mkC('c-rp-mo',{type:'bar',data:{labels:mos,datasets:[
-      {label:'Missing',data:mos.map(m=>sum(rp.filter(r=>r.month===m),'missing')),backgroundColor:C.Rd,borderColor:C.R,borderWidth:1.5,borderRadius:4},
-      {label:'Replacement',data:mos.map(m=>sum(rp.filter(r=>r.month===m),'replacement')),backgroundColor:C.Od,borderColor:C.O,borderWidth:1.5,borderRadius:4},
+      {label:'Missing',data:mos.map(m=>sum(rpFull.filter(r=>r.month===m),'missing')),backgroundColor:C.Rd,borderColor:C.R,borderWidth:1.5,borderRadius:4},
+      {label:'Replacement',data:mos.map(m=>sum(rpFull.filter(r=>r.month===m),'replacement')),backgroundColor:C.Od,borderColor:C.O,borderWidth:1.5,borderRadius:4},
     ]},options:cO(false)});
     // Replacement by Market — X=Markets, series=Missing/Replacement avg%, multi-color
     const mks=ALL_MKTS.filter(m=>rp.some(r=>r.market===m));
@@ -796,15 +805,18 @@ function rER(){
     restoreCanvas('wrap-er-wk','c-er-wk'); restoreCanvas('wrap-er-mo','c-er-mo');
     restoreCanvas('wrap-er-mk','c-er-mk'); restoreCanvas('wrap-er-mkt','c-er-mkt');
     restoreCanvas('wrap-er-daily','c-er-daily');
+    const erFull=RAW.errors; const ewmFull=buildEWM(erFull); const eWFull=sW(Object.keys(ewmFull));
     sB('b-er-wk',bT(wA));
-    mkC('c-er-wk',{type:'line',data:{labels:eW,datasets:[
-      {label:'Integration Error',data:eW.map(w=>ewm[w]?ewm[w].ie:0),borderColor:C.R,backgroundColor:C.Rd,borderWidth:2,tension:.4,fill:true,pointRadius:4,pointHoverRadius:6},
-      {label:'Warning',data:eW.map(w=>ewm[w]?ewm[w].w:0),borderColor:C.O,backgroundColor:C.Od,borderWidth:2,tension:.4,fill:true,pointRadius:4,pointHoverRadius:6},
+    mkC('c-er-wk',{type:'line',data:{labels:eWFull,datasets:[
+      {label:'Integration Error',data:eWFull.map(w=>ewmFull[w]?ewmFull[w].ie:0),borderColor:C.R,backgroundColor:C.Rd,borderWidth:2,tension:.4,fill:true,pointRadius:4,pointHoverRadius:6},
+      {label:'Warning',data:eWFull.map(w=>ewmFull[w]?ewmFull[w].w:0),borderColor:C.O,backgroundColor:C.Od,borderWidth:2,tension:.4,fill:true,pointRadius:4,pointHoverRadius:6},
     ]},options:cO(false)});
+    const moMFull={};erFull.forEach(e=>{const ab=F2A[e.month]||e.month;if(!moMFull[ab])moMFull[ab]={ie:0,w:0};if(e.error_type==='Integration Error')moMFull[ab].ie+=e.vol;else moMFull[ab].w+=e.vol;});
+    const mosFull=sM(Object.keys(moMFull));
     sB('b-er-mo',bM(mA));
-    mkC('c-er-mo',{type:'bar',data:{labels:mos,datasets:[
-      {label:'Integration Error',data:mos.map(m=>(moM[m]||{ie:0}).ie),backgroundColor:C.Rd,borderColor:C.R,borderWidth:1.5,borderRadius:4},
-      {label:'Warning',data:mos.map(m=>(moM[m]||{w:0}).w),backgroundColor:C.Od,borderColor:C.O,borderWidth:1.5,borderRadius:4},
+    mkC('c-er-mo',{type:'bar',data:{labels:mosFull,datasets:[
+      {label:'Integration Error',data:mosFull.map(m=>(moMFull[m]||{ie:0}).ie),backgroundColor:C.Rd,borderColor:C.R,borderWidth:1.5,borderRadius:4},
+      {label:'Warning',data:mosFull.map(m=>(moMFull[m]||{w:0}).w),backgroundColor:C.Od,borderColor:C.O,borderWidth:1.5,borderRadius:4},
     ]},options:cO(false)});
     // Errors by Market — X=Markets, series=IE%/Warning% avg, multi-color
     const erMkts=ALL_MKTS.filter(m=>er.some(e=>e.market===m));
@@ -863,10 +875,10 @@ function rCS(){
   const has=hasRows(cs);
   if(has){
     restoreCanvas('wrap-cs-wk','c-cs-wk'); restoreCanvas('wrap-cs-mo','c-cs-mo');
-    const wks=sW(cs.map(r=>r.week)); sB('b-cs-wk',bT(wCS));
+    const csFull=RAW.csat; const wks=sW(csFull.map(r=>r.week)); sB('b-cs-wk',bT(wCS));
     mkC('c-cs-wk',{type:'line',data:{labels:wks,datasets:[
-      {label:'Good %',data:wks.map(w=>{const rs=cs.filter(r=>r.week===w);const g=sum(rs,'good'),t=sum(rs,'total');return t?(g/t*100).toFixed(1):0;}),borderColor:C.G,backgroundColor:C.Gd,borderWidth:2,tension:.4,fill:true,pointRadius:4,pointHoverRadius:6},
-      {label:'Bad %',data:wks.map(w=>{const rs=cs.filter(r=>r.week===w);const b=sum(rs,'bad'),t=sum(rs,'total');return t?(b/t*100).toFixed(1):0;}),borderColor:C.R,backgroundColor:C.Rd,borderWidth:2,tension:.4,fill:true,pointRadius:4,pointHoverRadius:6},
+      {label:'Good %',data:wks.map(w=>{const rs=csFull.filter(r=>r.week===w);const g=sum(rs,'good'),t=sum(rs,'total');return t?(g/t*100).toFixed(1):0;}),borderColor:C.G,backgroundColor:C.Gd,borderWidth:2,tension:.4,fill:true,pointRadius:4,pointHoverRadius:6},
+      {label:'Bad %',data:wks.map(w=>{const rs=csFull.filter(r=>r.week===w);const b=sum(rs,'bad'),t=sum(rs,'total');return t?(b/t*100).toFixed(1):0;}),borderColor:C.R,backgroundColor:C.Rd,borderWidth:2,tension:.4,fill:true,pointRadius:4,pointHoverRadius:6},
     ]},options:cO(true)});
     const mos=sM(cs.map(r=>r.month)); sB('b-cs-mo',bM(mCS));
     mkC('c-cs-mo',{type:'bar',data:{labels:mos,datasets:[
