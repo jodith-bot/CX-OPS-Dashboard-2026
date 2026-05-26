@@ -836,16 +836,17 @@ function rER(){
       {label:'Total Errors',data:erMkts.map(m=>mkTots[m]),
        backgroundColor:erMkts.map(m=>MKT_PAL[m]+'55'||C.Rd),borderColor:erMkts.map(m=>MKT_PAL[m]||C.R),borderWidth:1.5,borderRadius:4},
     ]},options:{...cO(false),indexAxis:'y'}});
-        // Daily error tracking by market (last 30 days)
-    const erDates=er.map(e=>e.date).filter((v,i,a)=>a.indexOf(v)===i).sort().slice(-30);
-    const erDailyWoW=wA;
-    sB('b-er-daily',bT(erDailyWoW));
-    const top4Daily=top4Mks;
+        // Daily error tracking by market — always use full errors (last 30 days)
+    const erDates=erFull.map(e=>e.date).filter((v,i,a)=>a.indexOf(v)===i).sort().slice(-30);
+    // Top 4 markets by total volume across full range
+    const allMktTots={};erFull.forEach(e=>{allMktTots[e.market]=(allMktTots[e.market]||0)+e.vol;});
+    const top4Daily=Object.entries(allMktTots).sort((a,b)=>b[1]-a[1]).slice(0,4).map(e=>e[0]);
+    sB('b-er-daily',bT(wA));
     const dailyO=cO(false);
     dailyO.plugins.legend={display:true,position:'bottom',labels:{padding:8,boxWidth:8,usePointStyle:true,font:{size:8}}};
     mkC('c-er-daily',{type:'line',data:{labels:erDates,datasets:top4Daily.map((mk,i)=>({
       label:mk,
-      data:erDates.map(d=>er.filter(e=>e.date===d&&e.market===mk).reduce((s,e)=>s+e.vol,0)),
+      data:erDates.map(d=>erFull.filter(e=>e.date===d&&e.market===mk).reduce((s,e)=>s+e.vol,0)),
       borderColor:MKT_PAL[mk]||PAL[i],backgroundColor:'transparent',borderWidth:1.5,tension:.3,pointRadius:2,spanGaps:true,
     }))},options:dailyO});
   } else {
