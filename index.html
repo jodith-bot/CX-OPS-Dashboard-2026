@@ -216,7 +216,7 @@ select option{background:var(--sur2)}
   </div>
   <div class="stit">Specialist Performance</div>
   <div class="cr cr1">
-    <div class="cbox" style="overflow-x:auto"><div class="ch"><div><div class="ct">Specialist Performance</div></div><span class="cb G" id="b-ov-cs"></span><span class="tog-bar" style="flex-shrink:0"><span class="tog-btn on" style="cursor:default;pointer-events:none">All-Time</span></span></div><div id="sg-ov"></div></div>
+    <div class="cbox" style="overflow-x:auto"><div class="ch"><div><div class="ct">Specialist Performance</div></div></div><div id="sg-ov"></div></div>
   </div>
 </div>
 
@@ -254,8 +254,7 @@ select option{background:var(--sur2)}
           </div>
         </div>
       </div>
-      <div data-panel="wk"><div class="ccl" id="wrap-ov-cr"><canvas id="c-ov-cr"></canvas></div></div>
-      <div data-panel="mo" style="display:none"><div class="ccl" id="wrap-ov-cr-mo"><canvas id="c-ov-cr-mo"></canvas></div></div>
+      <div class="ccl" id="wrap-ov-cr"><canvas id="c-ov-cr"></canvas></div>
     </div>
     <div class="cbox" data-tog>
       <div class="ch">
@@ -267,8 +266,7 @@ select option{background:var(--sur2)}
           </div>
         </div>
       </div>
-      <div data-panel="wk"><div class="ccl" id="wrap-ov-sr"><canvas id="c-ov-sr"></canvas></div></div>
-      <div data-panel="mo" style="display:none"><div class="ccl" id="wrap-ov-sr-mo"><canvas id="c-ov-sr-mo"></canvas></div></div>
+      <div class="ccl" id="wrap-ov-sr"><canvas id="c-ov-sr"></canvas></div>
     </div>
   </div>
 
@@ -890,7 +888,7 @@ function rOV(){
         options:{...cO(false),indexAxis:'y',plugins:{legend:{display:false}}}});
     } else {noData('wrap-tk-cr','No data');noData('wrap-tk-sr','No data');}
   }
-    rSC('sg-ov','b-ov-cs');
+    rSC('sg-ov',null);
 }
 
 function ibHas(ib){return ib.length>0;}
@@ -950,7 +948,7 @@ function rCR(crId,crIdMo,srId,srIdMo,crB,crBMo,srB,srBMo){
     }))},options:srOptsM});}
 }
 // ── SPEC CSAT BARS ──
-function rSC(cid,bid){
+function rSC(cid,bid,showIbOb=true){
   const cs=fCS(),tk=fTK(),ib=fIB();
   const specs=[...new Set([...cs.map(r=>r.assignee),...tk.map(r=>r.assignee),...ib.map(r=>r.assignee)])].filter(Boolean).sort();
   const stats=specs.map(name=>{
@@ -1011,11 +1009,13 @@ function rSC(cid,bid){
   const el=document.getElementById(cid); if(!el) return;
   if(!stats.length){el.innerHTML='<div class="no-data"><div class="no-data-icon">📊</div><span>No data for this period</span></div>';return;}
   // Header row
-  const hdr=`<div style="display:grid;grid-template-columns:180px 75px 75px 75px 90px;gap:0;padding:6px 14px;border-bottom:1px solid var(--bdr);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mut2)">
+  const hdr=`<div style="display:grid;grid-template-columns:${showIbOb?'180px 75px 75px 75px 80px 80px 90px':'180px 75px 75px 75px 90px'};gap:0;padding:6px 14px;border-bottom:1px solid var(--bdr);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--mut2)">
     <span>Specialist</span>
     <span style="text-align:center;color:var(--G)">👍 Good</span>
     <span style="text-align:center;color:var(--R)">👎 Bad</span>
     <span style="text-align:center">Rated</span>
+    ${showIbOb?'<span style="text-align:center;color:var(--B)">IB</span>':''}
+    ${showIbOb?'<span style="text-align:center;color:var(--O)">OB</span>':''}
     <span style="text-align:center">Total</span>
   </div>`;
   const rows=stats.map((s,i)=>{
@@ -1028,11 +1028,13 @@ function rSC(cid,bid){
     const badPct=s.csT?(s.bad/s.csT*100).toFixed(1)+'%':'—';
     const ibPct=s.tkTotal?(s.ibTotal/s.tkTotal*100).toFixed(0)+'%':'—';
     const obPct=s.tkTotal?(s.obTotal/s.tkTotal*100).toFixed(0)+'%':'—';
-    return `<div style="display:grid;grid-template-columns:180px 75px 75px 75px 90px;gap:0;padding:9px 14px;align-items:center;${rowBg};border-bottom:1px solid rgba(36,43,61,.5)">
+    return `<div style="display:grid;grid-template-columns:${showIbOb?'180px 75px 75px 75px 80px 80px 90px':'180px 75px 75px 75px 90px'};gap:0;padding:9px 14px;align-items:center;${rowBg};border-bottom:1px solid rgba(36,43,61,.5)">
       <span style="font-size:11px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${s.name}">${s.name.replace('Natalia Fernanda Esteves Lozada','Natalia F. E. Lozada')}</span>
       <span style="text-align:center;font-size:12px;font-weight:700;color:var(--G);font-family:monospace">${s.g.toLocaleString()}</span>
       <span style="text-align:center;font-size:12px;font-weight:700;color:var(--R);font-family:monospace">${s.bad.toLocaleString()}</span>
       <span style="text-align:center;font-size:11px;color:var(--mut2);font-family:monospace">${s.csT.toLocaleString()}</span>
+      ${showIbOb?`<span style="text-align:center;font-size:11px;color:var(--B);font-family:monospace">${s.ibTotal.toLocaleString()}</span>`:''}
+      ${showIbOb?`<span style="text-align:center;font-size:11px;color:var(--O);font-family:monospace">${s.obTotal.toLocaleString()}</span>`:''}
       <span style="text-align:center;font-size:12px;font-weight:700;color:${tkC};font-family:monospace">${s.tkTotal.toLocaleString()}</span>
     </div>`;
   }).join('');
@@ -1042,11 +1044,13 @@ function rSC(cid,bid){
   const tkTotOB=stats.reduce((s,r)=>s+r.obTotal,0);
   const teamGoodPct=totT?(totG/totT*100).toFixed(1)+'%':'—';
   const teamBadPct=totT?(totBad/totT*100).toFixed(1)+'%':'—';
-  const footer=`<div style="display:grid;grid-template-columns:180px 75px 75px 75px 90px;gap:0;padding:8px 14px;border-top:2px solid var(--bdr);background:rgba(255,255,255,.03)">
+  const footer=`<div style="display:grid;grid-template-columns:${showIbOb?'180px 75px 75px 75px 80px 80px 90px':'180px 75px 75px 75px 90px'};gap:0;padding:8px 14px;border-top:2px solid var(--bdr);background:rgba(255,255,255,.03)">
     <span style="font-size:10px;font-weight:700;color:var(--mut2)">TEAM TOTAL</span>
     <span style="text-align:center;font-size:12px;font-weight:700;color:var(--G);font-family:monospace">${totG.toLocaleString()}</span>
     <span style="text-align:center;font-size:12px;font-weight:700;color:var(--R);font-family:monospace">${totBad.toLocaleString()}</span>
     <span style="text-align:center;font-size:11px;font-weight:700;color:var(--mut2);font-family:monospace">${totT.toLocaleString()}</span>
+    ${showIbOb?`<span style="text-align:center;font-size:11px;font-weight:700;color:var(--B);font-family:monospace">${tkTotIB.toLocaleString()}</span>`:''}
+    ${showIbOb?`<span style="text-align:center;font-size:11px;font-weight:700;color:var(--O);font-family:monospace">${tkTotOB.toLocaleString()}</span>`:''}
     <span style="text-align:center;font-size:12px;font-weight:700;color:var(--txt);font-family:monospace">${tkTotAll.toLocaleString()}</span>
   </div>`;
   el.innerHTML=hdr+rows+footer;
@@ -1458,7 +1462,7 @@ function rCS(){
       backgroundColor:PAL[i%PAL.length]+'88',borderColor:PAL[i%PAL.length],borderWidth:1.5,borderRadius:3};
     })},options:smO});
   } else {noData('wrap-cs-sw','No data');noData('wrap-cs-sm','No data');}
-  rSC('sg-cs',null);
+  rSC('sg-cs',null,false);
   renderCsatHeatmap();
   renderRanking();
 }
