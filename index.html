@@ -246,34 +246,38 @@ select option{background:var(--sur2)}
     <div class="cr cr1">
     <div class="cbox" data-tog>
       <div class="ch">
-        <div><div class="ct">Contact Reason Trend</div><div class="cs">Weekly & Monthly</div></div>
+        <div><div class="ct">Contact Reason Trend</div><div class="cs">Weekly &amp; Monthly</div></div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <span class="cb" id="b-ov-cr" data-tog-badge="wk"></span><span class="cb" id="b-ov-cr-mo" data-tog-badge="mo" style="display:none"></span>
           <div class="tog-bar">
             <button class="tog-btn on" data-mode="wk">Weekly</button>
             <button class="tog-btn" data-mode="mo">Monthly</button>
           </div>
         </div>
       </div>
-      <div class="ccl" id="wrap-ov-cr"><canvas id="c-ov-cr"></canvas></div>
+      <div data-panel="wk"><div class="ccl" id="wrap-ov-cr"><canvas id="c-ov-cr"></canvas></div></div>
+      <div data-panel="mo" style="display:none"><div class="ccl" id="wrap-ov-cr-mo"><canvas id="c-ov-cr-mo"></canvas></div></div>
     </div>
     <div class="cbox" data-tog>
       <div class="ch">
-        <div><div class="ct">Sub-Contact Reason Trend</div><div class="cs">Weekly & Monthly</div></div>
+        <div><div class="ct">Sub-Contact Reason Trend</div><div class="cs">Weekly &amp; Monthly</div></div>
         <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+          <span class="cb" id="b-ov-sr" data-tog-badge="wk"></span><span class="cb" id="b-ov-sr-mo" data-tog-badge="mo" style="display:none"></span>
           <div class="tog-bar">
             <button class="tog-btn on" data-mode="wk">Weekly</button>
             <button class="tog-btn" data-mode="mo">Monthly</button>
           </div>
         </div>
       </div>
-      <div class="ccl" id="wrap-ov-sr"><canvas id="c-ov-sr"></canvas></div>
+      <div data-panel="wk"><div class="ccl" id="wrap-ov-sr"><canvas id="c-ov-sr"></canvas></div></div>
+      <div data-panel="mo" style="display:none"><div class="ccl" id="wrap-ov-sr-mo"><canvas id="c-ov-sr-mo"></canvas></div></div>
     </div>
   </div>
 
     <div class="stit">Tickets by Specialist</div>
   <div class="cr cr1">
     <div class="cbox">
-      <div class="ch"><div><div class="ct">Tickets by Specialist</div><div class="cs">Weekly & Monthly</div></div></div>
+      <div class="ch"><div><div class="ct">Tickets by Specialist</div></div></div>
       <div id="sg-tk" class="sg"></div>
     </div>
   </div>
@@ -349,10 +353,7 @@ select option{background:var(--sur2)}
     <div class="cbox"><div class="ch"><div><div class="ct">Errors by Market</div><div class="cs">All-Time</div></div><span class="tog-bar" style="flex-shrink:0"><span class="tog-btn on" style="cursor:default;pointer-events:none">All-Time</span></span></div><div class="cc" id="wrap-er-mk"><canvas id="c-er-mk"></canvas></div></div>
     
   </div>
-  <div class="stit">Daily Error Tracking — by Market</div>
-  <div class="cr cr1">
-    
-  </div>
+
 </div>
 
 <div id="p-csat" class="page">
